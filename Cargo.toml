@@ -11,6 +11,7 @@ http://yaml.org/type/merge.html
 repository = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys"
 
 [dependencies]
-error-chain = "~0.7"
+error-chain = "~0.10"
+itertools = "~0.5"
 lazy_static = "~0.2"
 yaml-rust = "~0.3"
