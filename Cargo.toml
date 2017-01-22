@@ -1,0 +1,16 @@
+[package]
+name = "yaml-merge-keys"
+version = "0.1.0"
+authors = ["Ben Boeckel <ben.boeckel@kitware.com>"]
+license = "MIT/Apache-2.0"
+description = """
+Implementation of the YAML merge key extension.
+
+http://yaml.org/type/merge.html
+"""
+repository = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys"
+
+[dependencies]
+error-chain = "~0.7"
+lazy_static = "~0.2"
+yaml-rust = "~0.3"
