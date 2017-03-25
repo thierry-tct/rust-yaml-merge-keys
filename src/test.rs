@@ -9,6 +9,7 @@
 extern crate yaml_rust;
 use self::yaml_rust::Yaml;
 
+use ErrorKind;
 use merge_keys;
 
 fn assert_yaml_idempotent(doc: Yaml) {
@@ -278,4 +279,66 @@ fn test_yaml_spec_examples() {
     assert_eq!(merge_keys(merge_one_map).unwrap(), explicit);
     assert_eq!(merge_keys(merge_multiple_maps).unwrap(), explicit);
     assert_eq!(merge_keys(overrides).unwrap(), explicit);
+}
+
+macro_rules! assert_is_error {
+    ( $doc:expr, $kind:path ) => {
+        let err = merge_keys($doc).unwrap_err();
+
+        if let $kind = *err.kind() {
+            // Expected error.
+        } else {
+            panic!("unexpected error: {:?}", err);
+        }
+    }
+}
+
+#[test]
+fn test_invalid_merge_key_values() {
+    let merge_null = yaml_hash![
+        (merge_key(), Yaml::Null),
+    ];
+    let merge_bool = yaml_hash![
+        (merge_key(), Yaml::Boolean(false)),
+    ];
+    let merge_string = yaml_hash![
+        (merge_key(), Yaml::String("".to_string())),
+    ];
+    let merge_integer = yaml_hash![
+        (merge_key(), Yaml::Integer(0)),
+    ];
+    let merge_real = yaml_hash![
+        (merge_key(), Yaml::Real("0.02".to_string())),
+    ];
+
+    assert_is_error!(merge_null, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_bool, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_string, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_integer, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_real, ErrorKind::InvalidMergeValue);
+}
+
+#[test]
+fn test_invalid_merge_key_array_values() {
+    let merge_null = yaml_hash![
+        (merge_key(), Yaml::Array(vec![Yaml::Null])),
+    ];
+    let merge_bool = yaml_hash![
+        (merge_key(), Yaml::Array(vec![Yaml::Boolean(false)])),
+    ];
+    let merge_string = yaml_hash![
+        (merge_key(), Yaml::Array(vec![Yaml::String("".to_string())])),
+    ];
+    let merge_integer = yaml_hash![
+        (merge_key(), Yaml::Array(vec![Yaml::Integer(0)])),
+    ];
+    let merge_real = yaml_hash![
+        (merge_key(), Yaml::Array(vec![Yaml::Real("0.02".to_string())])),
+    ];
+
+    assert_is_error!(merge_null, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_bool, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_string, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_integer, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_real, ErrorKind::InvalidMergeValue);
 }
