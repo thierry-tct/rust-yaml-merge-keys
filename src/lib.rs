@@ -83,8 +83,17 @@ lazy_static! {
     static ref MERGE_KEY: Yaml = Yaml::String("<<".to_string());
 }
 
+/// Merge two hashes together.
+fn merge_hashes(mut hash: Hash, rhs: Hash) -> Hash {
+    rhs.into_iter()
+        .foreach(|(key, value)| {
+            hash.entry(key).or_insert(value);
+        });
+    hash
+}
+
 /// Merge values together.
-fn merge_values(mut hash: Hash, value: Yaml) -> Result<Hash> {
+fn merge_values(hash: Hash, value: Yaml) -> Result<Hash> {
     let merge_values = match value {
         Yaml::Array(arr) => {
             let init: Result<Hash> = Ok(Hash::new());
@@ -92,13 +101,9 @@ fn merge_values(mut hash: Hash, value: Yaml) -> Result<Hash> {
             try!(arr.into_iter()
                 .fold(init, |res_hash, item| {
                     // Merge in the next item.
-                    res_hash.and_then(move |mut res_hash| {
+                    res_hash.and_then(move |res_hash| {
                         if let Yaml::Hash(next_hash) = item {
-                            next_hash.into_iter()
-                                .foreach(|(key, value)| {
-                                    res_hash.entry(key).or_insert(value);
-                                });
-                            Ok(res_hash)
+                            Ok(merge_hashes(res_hash, next_hash))
                         } else {
                             // Non-hash values at this level are not allowed.
                             bail!(ErrorKind::InvalidMergeValue)
@@ -110,12 +115,7 @@ fn merge_values(mut hash: Hash, value: Yaml) -> Result<Hash> {
         _ => bail!(ErrorKind::InvalidMergeValue),
     };
 
-    merge_values.into_iter()
-        .foreach(|(key, value)| {
-            hash.entry(key).or_insert(value);
-        });
-
-    Ok(hash)
+    Ok(merge_hashes(hash, merge_values))
 }
 
 /// Recurse into a hash and handle items with merge keys in them.
