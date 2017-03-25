@@ -234,3 +234,48 @@ fn test_merge_key_nested_hash_key() {
 
     assert_eq!(merge_keys(hash).unwrap(), expected);
 }
+
+#[test]
+fn test_yaml_spec_examples() {
+    let center = yaml_hash![
+        (Yaml::String("x".to_string()), Yaml::Integer(1)),
+        (Yaml::String("y".to_string()), Yaml::Integer(2)),
+    ];
+    let left = yaml_hash![
+        (Yaml::String("x".to_string()), Yaml::Integer(0)),
+        (Yaml::String("y".to_string()), Yaml::Integer(2)),
+    ];
+    let big = yaml_hash![
+        (Yaml::String("r".to_string()), Yaml::Integer(10)),
+    ];
+    let small = yaml_hash![
+        (Yaml::String("r".to_string()), Yaml::Integer(1)),
+    ];
+
+    let explicit = yaml_hash![
+        (Yaml::String("x".to_string()), Yaml::Integer(1)),
+        (Yaml::String("y".to_string()), Yaml::Integer(2)),
+        (Yaml::String("r".to_string()), Yaml::Integer(10)),
+        (Yaml::String("label".to_string()), Yaml::String("center/big".to_string())),
+    ];
+    let merge_one_map = yaml_hash![
+        (merge_key(), center.clone()),
+        (Yaml::String("r".to_string()), Yaml::Integer(10)),
+        (Yaml::String("label".to_string()), Yaml::String("center/big".to_string())),
+    ];
+    let merge_multiple_maps = yaml_hash![
+        (merge_key(), Yaml::Array(vec![center.clone(), big.clone()])),
+        (Yaml::String("r".to_string()), Yaml::Integer(10)),
+        (Yaml::String("label".to_string()), Yaml::String("center/big".to_string())),
+    ];
+    let overrides = yaml_hash![
+        (merge_key(), Yaml::Array(vec![big.clone(), left.clone(), small.clone()])),
+        (Yaml::String("x".to_string()), Yaml::Integer(1)),
+        (Yaml::String("label".to_string()), Yaml::String("center/big".to_string())),
+    ];
+
+    assert_eq!(merge_keys(explicit.clone()).unwrap(), explicit);
+    assert_eq!(merge_keys(merge_one_map).unwrap(), explicit);
+    assert_eq!(merge_keys(merge_multiple_maps).unwrap(), explicit);
+    assert_eq!(merge_keys(overrides).unwrap(), explicit);
+}
