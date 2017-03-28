@@ -58,25 +58,12 @@ extern crate yaml_rust;
 use yaml_rust::Yaml;
 use yaml_rust::yaml::{Array, Hash};
 
+mod error;
+
+pub use error::*;
+
 #[cfg(test)]
 mod test;
-
-error_chain! {
-    errors {
-        /// A non-hash value was given as a value to merge into a hash.
-        ///
-        /// This happens with a document such as:
-        ///
-        /// ```yaml
-        /// -
-        ///   <<: 4
-        ///   x: 1
-        /// ```
-        InvalidMergeValue {
-            description("only mappings and arrays of mappings may be merged")
-        }
-    }
-}
 
 lazy_static! {
     /// The name of the key to use for merge data.

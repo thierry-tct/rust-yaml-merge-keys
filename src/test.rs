@@ -9,7 +9,7 @@
 extern crate yaml_rust;
 use self::yaml_rust::Yaml;
 
-use ErrorKind;
+use error::ErrorKind;
 use merge_keys;
 
 fn assert_yaml_idempotent(doc: Yaml) {
