@@ -53,9 +53,13 @@ extern crate lazy_static;
 
 mod error;
 mod merge_keys;
+#[cfg(feature="serde_yaml")]
+mod serde;
 
 pub use error::*;
 pub use merge_keys::merge_keys;
+#[cfg(feature="serde_yaml")]
+pub use serde::merge_keys_serde;
 
 #[cfg(test)]
 mod test;
