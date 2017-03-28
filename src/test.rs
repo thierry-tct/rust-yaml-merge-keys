@@ -84,8 +84,8 @@ fn test_handle_merge_keys() {
     ];
     let expected = yaml_hash![
         (Yaml::Integer(10), Yaml::Null),
-        (Yaml::Integer(15), Yaml::Null),
         (Yaml::Integer(100), Yaml::String("string".to_string())),
+        (Yaml::Integer(15), Yaml::Null),
     ];
 
     assert_eq!(merge_keys(hash).unwrap(), expected);
@@ -124,9 +124,9 @@ fn test_merge_key_array() {
     ];
     let expected = yaml_hash![
         (Yaml::Integer(10), Yaml::Null),
+        (Yaml::Integer(100), Yaml::String("string".to_string())),
         (Yaml::Integer(15), Yaml::Integer(10)),
         (Yaml::Integer(20), Yaml::Integer(10)),
-        (Yaml::Integer(100), Yaml::String("string".to_string())),
     ];
 
     assert_eq!(merge_keys(hash).unwrap(), expected);
@@ -148,8 +148,8 @@ fn test_merge_key_array_precedence() {
     ];
     let expected = yaml_hash![
         (Yaml::Integer(10), Yaml::Null),
-        (Yaml::Integer(15), Yaml::Integer(10)),
         (Yaml::Integer(100), Yaml::String("string".to_string())),
+        (Yaml::Integer(15), Yaml::Integer(10)),
     ];
 
     assert_eq!(merge_keys(hash).unwrap(), expected);
@@ -174,8 +174,8 @@ fn test_merge_key_nested_array() {
     let expected = Yaml::Array(vec![
         yaml_hash![
             (Yaml::Integer(10), Yaml::Null),
-            (Yaml::Integer(15), Yaml::Integer(10)),
             (Yaml::Integer(100), Yaml::String("string".to_string())),
+            (Yaml::Integer(15), Yaml::Integer(10)),
         ],
     ]);
 
@@ -201,8 +201,8 @@ fn test_merge_key_nested_hash_value() {
     let expected = yaml_hash![
         (Yaml::Null, yaml_hash![
             (Yaml::Integer(10), Yaml::Null),
-            (Yaml::Integer(15), Yaml::Integer(10)),
             (Yaml::Integer(100), Yaml::String("string".to_string())),
+            (Yaml::Integer(15), Yaml::Integer(10)),
         ]),
     ];
 
@@ -228,8 +228,8 @@ fn test_merge_key_nested_hash_key() {
     let expected = yaml_hash![
         (yaml_hash![
             (Yaml::Integer(10), Yaml::Null),
-            (Yaml::Integer(15), Yaml::Integer(10)),
             (Yaml::Integer(100), Yaml::String("string".to_string())),
+            (Yaml::Integer(15), Yaml::Integer(10)),
         ], Yaml::Null),
     ];
 
@@ -259,6 +259,18 @@ fn test_yaml_spec_examples() {
         (Yaml::String("r".to_string()), Yaml::Integer(10)),
         (Yaml::String("label".to_string()), Yaml::String("center/big".to_string())),
     ];
+    let explicit_ordered = yaml_hash![
+        (Yaml::String("r".to_string()), Yaml::Integer(10)),
+        (Yaml::String("label".to_string()), Yaml::String("center/big".to_string())),
+        (Yaml::String("x".to_string()), Yaml::Integer(1)),
+        (Yaml::String("y".to_string()), Yaml::Integer(2)),
+    ];
+    let explicit_ordered_overrides = yaml_hash![
+        (Yaml::String("x".to_string()), Yaml::Integer(1)),
+        (Yaml::String("label".to_string()), Yaml::String("center/big".to_string())),
+        (Yaml::String("r".to_string()), Yaml::Integer(10)),
+        (Yaml::String("y".to_string()), Yaml::Integer(2)),
+    ];
     let merge_one_map = yaml_hash![
         (merge_key(), center.clone()),
         (Yaml::String("r".to_string()), Yaml::Integer(10)),
@@ -276,9 +288,9 @@ fn test_yaml_spec_examples() {
     ];
 
     assert_eq!(merge_keys(explicit.clone()).unwrap(), explicit);
-    assert_eq!(merge_keys(merge_one_map).unwrap(), explicit);
-    assert_eq!(merge_keys(merge_multiple_maps).unwrap(), explicit);
-    assert_eq!(merge_keys(overrides).unwrap(), explicit);
+    assert_eq!(merge_keys(merge_one_map).unwrap(), explicit_ordered);
+    assert_eq!(merge_keys(merge_multiple_maps).unwrap(), explicit_ordered);
+    assert_eq!(merge_keys(overrides).unwrap(), explicit_ordered_overrides);
 }
 
 macro_rules! assert_is_error {
