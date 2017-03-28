@@ -48,97 +48,14 @@
 #[macro_use]
 extern crate error_chain;
 
-extern crate itertools;
-use itertools::Itertools;
-
 #[macro_use]
 extern crate lazy_static;
 
-extern crate yaml_rust;
-use yaml_rust::Yaml;
-use yaml_rust::yaml::{Array, Hash};
-
 mod error;
+mod merge_keys;
 
 pub use error::*;
+pub use merge_keys::merge_keys;
 
 #[cfg(test)]
 mod test;
-
-lazy_static! {
-    /// The name of the key to use for merge data.
-    static ref MERGE_KEY: Yaml = Yaml::String("<<".to_string());
-}
-
-/// Merge two hashes together.
-fn merge_hashes(mut hash: Hash, rhs: Hash) -> Hash {
-    rhs.into_iter()
-        .foreach(|(key, value)| {
-            hash.entry(key).or_insert(value);
-        });
-    hash
-}
-
-/// Merge values together.
-fn merge_values(hash: Hash, value: Yaml) -> Result<Hash> {
-    let merge_values = match value {
-        Yaml::Array(arr) => {
-            let init: Result<Hash> = Ok(Hash::new());
-
-            try!(arr.into_iter()
-                .fold(init, |res_hash, item| {
-                    // Merge in the next item.
-                    res_hash.and_then(move |res_hash| {
-                        if let Yaml::Hash(next_hash) = item {
-                            Ok(merge_hashes(res_hash, next_hash))
-                        } else {
-                            // Non-hash values at this level are not allowed.
-                            bail!(ErrorKind::InvalidMergeValue)
-                        }
-                    })
-                }))
-        },
-        Yaml::Hash(merge_hash) => merge_hash,
-        _ => bail!(ErrorKind::InvalidMergeValue),
-    };
-
-    Ok(merge_hashes(hash, merge_values))
-}
-
-/// Recurse into a hash and handle items with merge keys in them.
-fn merge_hash(hash: Hash) -> Result<Yaml> {
-    let mut hash = try!(hash.into_iter()
-        // First handle any merge keys in the key or value...
-        .map(|(key, value)| {
-            merge_keys(key)
-                .and_then(|key| {
-                    merge_keys(value)
-                        .map(|value| (key, value))
-                })
-        })
-        .collect::<Result<Hash>>());
-
-    if let Some(merge_value) = hash.remove(&MERGE_KEY) {
-        merge_values(hash, merge_value)
-            .map(Yaml::Hash)
-    } else {
-        Ok(Yaml::Hash(hash))
-    }
-}
-
-/// Recurse into an array and handle items with merge keys in them.
-fn merge_array(arr: Array) -> Result<Yaml> {
-    arr.into_iter()
-        .map(merge_keys)
-        .collect::<Result<Array>>()
-        .map(Yaml::Array)
-}
-
-/// Handle merge keys in a YAML document.
-pub fn merge_keys(doc: Yaml) -> Result<Yaml> {
-    match doc {
-        Yaml::Hash(hash) => merge_hash(hash),
-        Yaml::Array(arr) => merge_array(arr),
-        _ => Ok(doc),
-    }
-}
