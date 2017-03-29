@@ -9,6 +9,7 @@ Implementation of the YAML merge key extension.
 http://yaml.org/type/merge.html
 """
 repository = "https://gitlab.kitware.com/utils/rust-yaml-merge-keys"
+readme = "README.md"
 
 [dependencies]
 error-chain = "~0.10"
