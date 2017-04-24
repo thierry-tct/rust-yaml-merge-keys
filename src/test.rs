@@ -6,8 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate yaml_rust;
-use self::yaml_rust::Yaml;
+use crates::yaml_rust::Yaml;
 
 use error::ErrorKind;
 use merge_keys::merge_keys;

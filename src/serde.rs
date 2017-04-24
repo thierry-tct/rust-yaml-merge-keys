@@ -6,11 +6,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate serde_yaml;
-use self::serde_yaml::Value;
-
-extern crate yaml_rust;
-use self::yaml_rust::Yaml;
+use crates::serde_yaml::Value;
+use crates::yaml_rust::Yaml;
 
 use error::*;
 use merge_keys;

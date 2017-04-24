@@ -6,12 +6,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate itertools;
-use self::itertools::Itertools;
-
-extern crate yaml_rust;
-use self::yaml_rust::Yaml;
-use self::yaml_rust::yaml::{Array, Hash};
+use crates::itertools::Itertools;
+use crates::yaml_rust::Yaml;
+use crates::yaml_rust::yaml::{Array, Hash};
 
 use error::*;
 

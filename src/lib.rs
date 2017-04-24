@@ -51,6 +51,17 @@ extern crate error_chain;
 #[macro_use]
 extern crate lazy_static;
 
+mod crates {
+    // public
+    // pub extern crate error_chain;
+    #[cfg(feature="serde_yaml")]
+    pub extern crate serde_yaml;
+    pub extern crate yaml_rust;
+
+    // private
+    pub extern crate itertools;
+}
+
 mod error;
 mod merge_keys;
 #[cfg(feature="serde_yaml")]
