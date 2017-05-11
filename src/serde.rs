@@ -35,8 +35,13 @@ impl From<Yaml> for YamlWrap {
 impl From<Value> for YamlWrap {
     fn from(yaml: Value) -> Self {
         YamlWrap(match yaml {
-            Value::F64(f) => Yaml::Real(format!("{}", f)),
-            Value::I64(i) => Yaml::Integer(i),
+            Value::Number(n) => {
+                if let Some(i) = n.as_i64() {
+                    Yaml::Integer(i)
+                } else {
+                    Yaml::Real(format!("{}", n))
+                }
+            },
             Value::String(s) => Yaml::String(s),
             Value::Bool(s) => Yaml::Boolean(s),
             Value::Sequence(seq) => {
@@ -56,17 +61,26 @@ impl From<YamlWrap> for Value {
     fn from(yaml: YamlWrap) -> Self {
         match yaml.0 {
             Yaml::Real(f) => {
-                match f.parse() {
-                    Ok(f) => Value::F64(f),
+                match f.parse::<f64>() {
+                    Ok(f) => Value::Number(f.into()),
                     Err(_) => Value::String(f),
                 }
             },
-            Yaml::Integer(i) => Value::I64(i),
+            Yaml::Integer(i) => Value::Number(i.into()),
             Yaml::String(s) => Value::String(s),
             Yaml::Boolean(b) => Value::Bool(b),
-            Yaml::Array(array) => Value::Sequence(array.into_iter().map(Into::into).collect()),
+            Yaml::Array(array) => {
+                Value::Sequence(array.into_iter().map(|item| {
+                    let wrap: YamlWrap = item.into();
+                    wrap.into()
+                }).collect())
+            },
             Yaml::Hash(hash) => {
-                Value::Mapping(hash.into_iter().map(|(k, v)| (k.into(), v.into())).collect())
+                Value::Mapping(hash.into_iter().map(|(k, v)| {
+                    let key: YamlWrap = k.into();
+                    let value: YamlWrap = v.into();
+                    (key.into(), value.into())
+                }).collect())
             },
             Yaml::Alias(_) => panic!("alias unsupported"),
             Yaml::Null => Value::Null,
