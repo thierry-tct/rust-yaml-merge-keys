@@ -15,8 +15,8 @@ use merge_keys;
 struct YamlWrap(Yaml);
 
 impl YamlWrap {
-    fn into_yaml(yaml: Self) -> Yaml {
-        yaml.into()
+    fn into_yaml(self) -> Yaml {
+        self.into()
     }
 }
 
@@ -45,11 +45,11 @@ impl From<Value> for YamlWrap {
             Value::String(s) => Yaml::String(s),
             Value::Bool(s) => Yaml::Boolean(s),
             Value::Sequence(seq) => {
-                Yaml::Array(seq.into_iter().map(Into::into).map(YamlWrap::into_yaml).collect())
+                Yaml::Array(seq.into_iter().map(Into::into).map(Self::into_yaml).collect())
             },
             Value::Mapping(map) => {
                 Yaml::Hash(map.into_iter()
-                    .map(|(k, v)| (YamlWrap::into_yaml(k.into()), YamlWrap::into_yaml(v.into())))
+                    .map(|(k, v)| (Self::into_yaml(k.into()), Self::into_yaml(v.into())))
                     .collect())
             },
             Value::Null => Yaml::Null,
