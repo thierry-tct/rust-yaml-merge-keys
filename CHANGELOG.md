@@ -1,3 +1,7 @@
+# v0.3.0 (unreleased)
+
+  * Updated dependencies.
+
 # v0.2.1
 
   * `docs.rs` now builds with the `serde_yaml` feature.
