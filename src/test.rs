@@ -19,7 +19,8 @@ fn merge_key() -> Yaml {
 }
 
 macro_rules! yaml_hash {
-    [ $( $pair:expr, )* ] => {
+    // XXX(rust-1.37.0): Use `$(,)?` when available.
+    [ $( $pair:expr ),* $(,)* ] => {
         Yaml::Hash([$( $pair, )*].into_iter().cloned().collect())
     }
 }
