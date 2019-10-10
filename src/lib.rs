@@ -1,5 +1,3 @@
-// Copyright 2017 Kitware, Inc.
-//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
@@ -50,7 +48,7 @@ extern crate lazy_static;
 
 mod crates {
     // public
-    #[cfg(feature="serde_yaml")]
+    #[cfg(feature = "serde_yaml")]
     pub extern crate serde_yaml;
     pub extern crate yaml_rust;
 
@@ -59,12 +57,12 @@ mod crates {
 }
 
 mod merge_keys;
-#[cfg(feature="serde_yaml")]
+#[cfg(feature = "serde_yaml")]
 mod serde;
 
 pub use merge_keys::merge_keys;
 pub use merge_keys::MergeKeyError;
-#[cfg(feature="serde_yaml")]
+#[cfg(feature = "serde_yaml")]
 pub use serde::merge_keys_serde;
 
 #[cfg(test)]

@@ -1,5 +1,3 @@
-// Copyright 2017 Kitware, Inc.
-//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
@@ -45,12 +43,19 @@ impl From<Value> for YamlWrap {
             Value::String(s) => Yaml::String(s),
             Value::Bool(s) => Yaml::Boolean(s),
             Value::Sequence(seq) => {
-                Yaml::Array(seq.into_iter().map(Into::into).map(Self::into_yaml).collect())
+                Yaml::Array(
+                    seq.into_iter()
+                        .map(Into::into)
+                        .map(Self::into_yaml)
+                        .collect(),
+                )
             },
             Value::Mapping(map) => {
-                Yaml::Hash(map.into_iter()
-                    .map(|(k, v)| (Self::into_yaml(k.into()), Self::into_yaml(v.into())))
-                    .collect())
+                Yaml::Hash(
+                    map.into_iter()
+                        .map(|(k, v)| (Self::into_yaml(k.into()), Self::into_yaml(v.into())))
+                        .collect(),
+                )
             },
             Value::Null => Yaml::Null,
         })
@@ -70,17 +75,26 @@ impl From<YamlWrap> for Value {
             Yaml::String(s) => Value::String(s),
             Yaml::Boolean(b) => Value::Bool(b),
             Yaml::Array(array) => {
-                Value::Sequence(array.into_iter().map(|item| {
-                    let wrap: YamlWrap = item.into();
-                    wrap.into()
-                }).collect())
+                Value::Sequence(
+                    array
+                        .into_iter()
+                        .map(|item| {
+                            let wrap: YamlWrap = item.into();
+                            wrap.into()
+                        })
+                        .collect(),
+                )
             },
             Yaml::Hash(hash) => {
-                Value::Mapping(hash.into_iter().map(|(k, v)| {
-                    let key: YamlWrap = k.into();
-                    let value: YamlWrap = v.into();
-                    (key.into(), value.into())
-                }).collect())
+                Value::Mapping(
+                    hash.into_iter()
+                        .map(|(k, v)| {
+                            let key: YamlWrap = k.into();
+                            let value: YamlWrap = v.into();
+                            (key.into(), value.into())
+                        })
+                        .collect(),
+                )
             },
             Yaml::Alias(_) => panic!("alias unsupported"),
             Yaml::Null => Value::Null,

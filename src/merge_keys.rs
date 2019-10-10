@@ -1,5 +1,3 @@
-// Copyright 2017 Kitware, Inc.
-//
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
@@ -7,8 +5,8 @@
 // except according to those terms.
 
 use crates::thiserror::Error;
-use crates::yaml_rust::Yaml;
 use crates::yaml_rust::yaml::{Array, Hash};
+use crates::yaml_rust::Yaml;
 
 /// Errors which may occur when performing the YAML merge key process.
 ///
@@ -43,10 +41,9 @@ lazy_static! {
 
 /// Merge two hashes together.
 fn merge_hashes(mut hash: Hash, rhs: Hash) -> Hash {
-    rhs.into_iter()
-        .for_each(|(key, value)| {
-            hash.entry(key).or_insert(value);
-        });
+    rhs.into_iter().for_each(|(key, value)| {
+        hash.entry(key).or_insert(value);
+    });
     hash
 }
 
@@ -56,18 +53,17 @@ fn merge_values(hash: Hash, value: Yaml) -> Result<Hash, MergeKeyError> {
         Yaml::Array(arr) => {
             let init: Result<Hash, _> = Ok(Hash::new());
 
-            arr.into_iter()
-                .fold(init, |res_hash, item| {
-                    // Merge in the next item.
-                    res_hash.and_then(move |res_hash| {
-                        if let Yaml::Hash(next_hash) = item {
-                            Ok(merge_hashes(res_hash, next_hash))
-                        } else {
-                            // Non-hash values at this level are not allowed.
-                            Err(MergeKeyError::InvalidMergeValue)
-                        }
-                    })
-                })?
+            arr.into_iter().fold(init, |res_hash, item| {
+                // Merge in the next item.
+                res_hash.and_then(move |res_hash| {
+                    if let Yaml::Hash(next_hash) = item {
+                        Ok(merge_hashes(res_hash, next_hash))
+                    } else {
+                        // Non-hash values at this level are not allowed.
+                        Err(MergeKeyError::InvalidMergeValue)
+                    }
+                })
+            })?
         },
         Yaml::Hash(merge_hash) => merge_hash,
         _ => return Err(MergeKeyError::InvalidMergeValue),
@@ -78,20 +74,16 @@ fn merge_values(hash: Hash, value: Yaml) -> Result<Hash, MergeKeyError> {
 
 /// Recurse into a hash and handle items with merge keys in them.
 fn merge_hash(hash: Hash) -> Result<Yaml, MergeKeyError> {
-    let mut hash = hash.into_iter()
+    let mut hash = hash
+        .into_iter()
         // First handle any merge keys in the key or value...
         .map(|(key, value)| {
-            merge_keys(key)
-                .and_then(|key| {
-                    merge_keys(value)
-                        .map(|value| (key, value))
-                })
+            merge_keys(key).and_then(|key| merge_keys(value).map(|value| (key, value)))
         })
         .collect::<Result<Hash, _>>()?;
 
     if let Some(merge_value) = hash.remove(&MERGE_KEY) {
-        merge_values(hash, merge_value)
-            .map(Yaml::Hash)
+        merge_values(hash, merge_value).map(Yaml::Hash)
     } else {
         Ok(Yaml::Hash(hash))
     }
