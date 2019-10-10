@@ -45,11 +45,7 @@ lazy_static! {
 fn merge_hashes(mut hash: Hash, rhs: Hash) -> Hash {
     rhs.into_iter()
         .for_each(|(key, value)| {
-            // Requires 0.3.7 to be released. See https://github.com/chyh1990/yaml-rust/issues/88.
-            // hash.entry(key).or_insert(value);
-            if !hash.contains_key(&key) {
-                hash.insert(key, value);
-            }
+            hash.entry(key).or_insert(value);
         });
     hash
 }
