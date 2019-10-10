@@ -6,7 +6,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crates::itertools::Itertools;
 use crates::thiserror::Error;
 use crates::yaml_rust::Yaml;
 use crates::yaml_rust::yaml::{Array, Hash};
@@ -45,7 +44,7 @@ lazy_static! {
 /// Merge two hashes together.
 fn merge_hashes(mut hash: Hash, rhs: Hash) -> Hash {
     rhs.into_iter()
-        .foreach(|(key, value)| {
+        .for_each(|(key, value)| {
             // Requires 0.3.7 to be released. See https://github.com/chyh1990/yaml-rust/issues/88.
             // hash.entry(key).or_insert(value);
             if !hash.contains_key(&key) {

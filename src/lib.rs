@@ -55,7 +55,6 @@ mod crates {
     pub extern crate yaml_rust;
 
     // private
-    pub extern crate itertools;
     pub extern crate thiserror;
 }
 
