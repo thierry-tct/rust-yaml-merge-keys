@@ -60,7 +60,7 @@ fn merge_values(hash: Hash, value: Yaml) -> Result<Hash, MergeKeyError> {
         Yaml::Array(arr) => {
             let init: Result<Hash, _> = Ok(Hash::new());
 
-            try!(arr.into_iter()
+            arr.into_iter()
                 .fold(init, |res_hash, item| {
                     // Merge in the next item.
                     res_hash.and_then(move |res_hash| {
@@ -71,7 +71,7 @@ fn merge_values(hash: Hash, value: Yaml) -> Result<Hash, MergeKeyError> {
                             Err(MergeKeyError::InvalidMergeValue)
                         }
                     })
-                }))
+                })?
         },
         Yaml::Hash(merge_hash) => merge_hash,
         _ => return Err(MergeKeyError::InvalidMergeValue),
@@ -82,7 +82,7 @@ fn merge_values(hash: Hash, value: Yaml) -> Result<Hash, MergeKeyError> {
 
 /// Recurse into a hash and handle items with merge keys in them.
 fn merge_hash(hash: Hash) -> Result<Yaml, MergeKeyError> {
-    let mut hash = try!(hash.into_iter()
+    let mut hash = hash.into_iter()
         // First handle any merge keys in the key or value...
         .map(|(key, value)| {
             merge_keys(key)
@@ -91,7 +91,7 @@ fn merge_hash(hash: Hash) -> Result<Yaml, MergeKeyError> {
                         .map(|value| (key, value))
                 })
         })
-        .collect::<Result<Hash, _>>());
+        .collect::<Result<Hash, _>>()?;
 
     if let Some(merge_value) = hash.remove(&MERGE_KEY) {
         merge_values(hash, merge_value)
