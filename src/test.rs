@@ -8,8 +8,7 @@
 
 use crates::yaml_rust::Yaml;
 
-use error::ErrorKind;
-use merge_keys::merge_keys;
+use merge_keys::{merge_keys, MergeKeyError};
 
 fn assert_yaml_idempotent(doc: Yaml) {
     assert_eq!(merge_keys(doc.clone()).unwrap(), doc);
@@ -296,7 +295,7 @@ macro_rules! assert_is_error {
     ( $doc:expr, $kind:path ) => {
         let err = merge_keys($doc).unwrap_err();
 
-        if let $kind = *err.kind() {
+        if let $kind = err {
             // Expected error.
         } else {
             panic!("unexpected error: {:?}", err);
@@ -322,11 +321,11 @@ fn test_invalid_merge_key_values() {
         (merge_key(), Yaml::Real("0.02".to_string())),
     ];
 
-    assert_is_error!(merge_null, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_bool, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_string, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_integer, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_real, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_null, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_bool, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_string, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_integer, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_real, MergeKeyError::InvalidMergeValue);
 }
 
 #[test]
@@ -347,9 +346,9 @@ fn test_invalid_merge_key_array_values() {
         (merge_key(), Yaml::Array(vec![Yaml::Real("0.02".to_string())])),
     ];
 
-    assert_is_error!(merge_null, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_bool, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_string, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_integer, ErrorKind::InvalidMergeValue);
-    assert_is_error!(merge_real, ErrorKind::InvalidMergeValue);
+    assert_is_error!(merge_null, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_bool, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_string, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_integer, MergeKeyError::InvalidMergeValue);
+    assert_is_error!(merge_real, MergeKeyError::InvalidMergeValue);
 }

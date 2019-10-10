@@ -46,29 +46,25 @@
 #![deny(missing_docs)]
 
 #[macro_use]
-extern crate error_chain;
-
-#[macro_use]
 extern crate lazy_static;
 
 mod crates {
     // public
-    // pub extern crate error_chain;
     #[cfg(feature="serde_yaml")]
     pub extern crate serde_yaml;
     pub extern crate yaml_rust;
 
     // private
     pub extern crate itertools;
+    pub extern crate thiserror;
 }
 
-mod error;
 mod merge_keys;
 #[cfg(feature="serde_yaml")]
 mod serde;
 
-pub use error::*;
 pub use merge_keys::merge_keys;
+pub use merge_keys::MergeKeyError;
 #[cfg(feature="serde_yaml")]
 pub use serde::merge_keys_serde;
 

@@ -9,8 +9,8 @@
 use crates::serde_yaml::Value;
 use crates::yaml_rust::Yaml;
 
-use error::*;
 use merge_keys;
+use MergeKeyError;
 
 struct YamlWrap(Yaml);
 
@@ -90,7 +90,7 @@ impl From<YamlWrap> for Value {
 }
 
 /// Handle merge keys in a serde YAML document.
-pub fn merge_keys_serde(doc: Value) -> Result<Value> {
+pub fn merge_keys_serde(doc: Value) -> Result<Value, MergeKeyError> {
     merge_keys(YamlWrap::into_yaml(doc.into()))
         .map(YamlWrap)
         .map(Into::into)
