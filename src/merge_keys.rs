@@ -38,7 +38,7 @@ pub enum MergeKeyError {
 
 lazy_static! {
     /// The name of the key to use for merge data.
-    static ref MERGE_KEY: Yaml = Yaml::String("<<".to_string());
+    static ref MERGE_KEY: Yaml = Yaml::String("<<".into());
 }
 
 /// Merge two hashes together.
