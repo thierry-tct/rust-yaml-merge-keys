@@ -1,0 +1,217 @@
+# The `mindeps` is not supported right now. `yaml-rust` is too loose in its
+# requirement on `linked-hash-map`. `serde_yaml` then fails on some APIs that
+# *it* needs from the exposure of that crate from `yaml-rust`'s API.
+
+before_script:
+    - apt-get update -yqq
+    - export CARGO_HOME=.cargo-cache
+    - rustc --version
+    - cargo --version
+
+.rust_tags: &rust_tags
+    - rust
+    - docker
+    - ghostflow
+    - linux
+
+.cargo_update: &cargo_update
+    - cargo generate-lockfile $GENERATE_LOCKFILE_ARGS
+    - cargo fetch --locked
+
+.cargo_build: &cargo_build
+    - cargo build $CARGO_BUILD_FROZEN $CARGO_FEATURES --all --verbose
+    - cargo test --frozen $CARGO_FEATURES --all --no-run --verbose
+
+.cargo_test: &cargo_test
+    - cargo test --frozen $CARGO_FEATURES --all --verbose
+
+.rust_minimum: &rust_minimum
+    image: "rust:1.31.1"
+
+    variables:
+        # Not supported yet here? If updating to a version where this works,
+        # remove this variable.
+        #CARGO_BUILD_FROZEN: --frozen
+        CARGO_UPDATE_POLICY: newest
+
+.rust_stable: &rust_stable
+    image: "rust:latest"
+
+    variables:
+        CARGO_BUILD_FROZEN: --frozen
+        CARGO_UPDATE_POLICY: newest
+
+.rust_nightly: &rust_nightly
+    extends: .rust_stable
+
+    image: "rustlang/rust:nightly"
+
+.rust_minimum_features: &rust_minimum_features
+    extends: .rust_minimum
+
+    variables:
+        CARGO_FEATURES: --all-features
+
+.rust_stable_features: &rust_stable_features
+    extends: .rust_stable
+
+    variables:
+        CARGO_FEATURES: --all-features
+
+.rust_nightly_features: &rust_nightly_features
+    extends: .rust_nightly
+
+    variables:
+        CARGO_FEATURES: --all-features
+
+.cargo_fetch_job: &cargo_fetch_job
+    stage: prepare
+    tags: *rust_tags
+    script: *cargo_update
+    artifacts:
+        expire_in: 60m
+        paths:
+            - .cargo-cache
+            - Cargo.lock
+    cache:
+        key: cargo-cache-$CARGO_UPDATE_POLICY
+        paths:
+            - .cargo-cache
+    interruptible: true
+
+.cargo_build_job: &cargo_build_job
+    stage: build
+    tags: *rust_tags
+    script: *cargo_build
+    artifacts:
+        expire_in: 60m
+        paths:
+            - .cargo-cache
+            - Cargo.lock
+            - target
+    cache:
+        key: build-cache-$CI_JOB_NAME
+        paths:
+            - target
+    interruptible: true
+
+.cargo_test_job: &cargo_test_job
+    stage: test
+    tags: *rust_tags
+    script: *cargo_test
+    interruptible: true
+
+stages:
+    - prepare
+    - build
+    - test
+
+prepare:cargo-cache-newest:
+    <<:
+        - *cargo_fetch_job
+        - *rust_stable
+
+.cargo_cache_newest: &cargo_cache_newest
+    dependencies:
+        - prepare:cargo-cache-newest
+    needs:
+        - prepare:cargo-cache-newest
+
+build:cargo-clippy:
+    <<:
+        - *cargo_build_job
+        - *rust_stable
+        - *cargo_cache_newest
+    script:
+        - rustup component add clippy
+        - cargo clippy --frozen --tests --all --verbose -- -D warnings
+
+build:cargo-minimum:
+    <<:
+        - *cargo_build_job
+        - *rust_minimum
+        - *cargo_cache_newest
+
+test:cargo-minimum:
+    <<:
+        - *cargo_test_job
+        - *rust_minimum
+    dependencies:
+        - build:cargo-minimum
+    needs:
+        - build:cargo-minimum
+
+build:cargo-stable:
+    <<:
+        - *cargo_build_job
+        - *rust_stable
+        - *cargo_cache_newest
+
+test:cargo-stable:
+    <<:
+        - *cargo_test_job
+        - *rust_stable
+    dependencies:
+        - build:cargo-stable
+    needs:
+        - build:cargo-stable
+
+build:cargo-nightly:
+    <<:
+        - *cargo_build_job
+        - *rust_nightly
+        - *cargo_cache_newest
+
+test:cargo-nightly:
+    <<:
+        - *cargo_test_job
+        - *rust_nightly
+    dependencies:
+        - build:cargo-nightly
+    needs:
+        - build:cargo-nightly
+
+build:cargo-minimum-features:
+    <<:
+        - *cargo_build_job
+        - *rust_minimum_features
+        - *cargo_cache_newest
+
+test:cargo-minimum-features:
+    <<:
+        - *cargo_test_job
+        - *rust_minimum_features
+    dependencies:
+        - build:cargo-minimum-features
+    needs:
+        - build:cargo-minimum-features
+
+build:cargo-stable-features:
+    <<:
+        - *cargo_build_job
+        - *rust_stable_features
+        - *cargo_cache_newest
+
+test:cargo-stable-features:
+    <<:
+        - *cargo_test_job
+        - *rust_stable_features
+    dependencies:
+        - build:cargo-stable-features
+    needs:
+        - build:cargo-stable-features
+
+build:cargo-nightly-features:
+    <<:
+        - *cargo_build_job
+        - *rust_nightly_features
+        - *cargo_cache_newest
+
+test:cargo-nightly-features:
+    <<:
+        - *cargo_test_job
+        - *rust_nightly_features
+    dependencies:
+        - build:cargo-nightly-features
+    needs:
+        - build:cargo-nightly-features
