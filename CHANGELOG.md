@@ -1,4 +1,4 @@
-# v0.4.0 (unreleased)
+# v0.4.0
 
   * Remove `error-chain`.
 
