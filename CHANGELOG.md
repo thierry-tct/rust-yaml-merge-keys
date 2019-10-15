@@ -1,3 +1,7 @@
+# v0.4.0 (unreleased)
+
+  * Remove `error-chain`.
+
 # v0.3.0
 
   * Updated dependencies.
