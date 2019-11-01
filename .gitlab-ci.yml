@@ -18,6 +18,10 @@ before_script:
     - cargo generate-lockfile $GENERATE_LOCKFILE_ARGS
     - cargo fetch --locked
 
+.cargo_clippy: &cargo_clippy
+    - rustup component add clippy
+    - cargo clippy --frozen --tests --all --verbose -- -D warnings
+
 .cargo_build: &cargo_build
     - cargo build $CARGO_BUILD_FROZEN $CARGO_FEATURES --all --verbose
     - cargo test --frozen $CARGO_FEATURES --all --no-run --verbose
@@ -79,6 +83,12 @@ before_script:
             - .cargo-cache
     interruptible: true
 
+.cargo_clippy_job: &cargo_clippy_job
+    stage: build
+    tags: *rust_tags
+    script: *cargo_clippy
+    interruptible: true
+
 .cargo_build_job: &cargo_build_job
     stage: build
     tags: *rust_tags
@@ -119,12 +129,9 @@ prepare:cargo-cache-newest:
 
 build:cargo-clippy:
     <<:
-        - *cargo_build_job
+        - *cargo_clippy_job
         - *rust_stable
         - *cargo_cache_newest
-    script:
-        - rustup component add clippy
-        - cargo clippy --frozen --tests --all --verbose -- -D warnings
 
 build:cargo-minimum:
     <<:
