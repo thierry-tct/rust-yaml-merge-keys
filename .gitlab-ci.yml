@@ -19,12 +19,20 @@ before_script:
     - cargo fetch --locked
 
 .cargo_clippy: &cargo_clippy
+    # Only use it if it's available; no need to fail the build due to something
+    # gone wrong here.
+    - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
     - rustup component add clippy
     - cargo clippy --frozen --tests --all --verbose -- -D warnings
+    - ".gitlab/sccache --show-stats || :"
 
 .cargo_build: &cargo_build
+    # Only use it if it's available; no need to fail the build due to something
+    # gone wrong here.
+    - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
     - cargo build $CARGO_BUILD_FROZEN $CARGO_FEATURES --all --verbose
     - cargo test --frozen $CARGO_FEATURES --all --no-run --verbose
+    - ".gitlab/sccache --show-stats || :"
 
 .cargo_test: &cargo_test
     - cargo test --frozen $CARGO_FEATURES --all --verbose
@@ -37,6 +45,7 @@ before_script:
         # remove this variable.
         #CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
+        SCCACHE_REDIS: redis://minmus:6379
 
 .rust_stable: &rust_stable
     image: "rust:latest"
@@ -44,6 +53,7 @@ before_script:
     variables:
         CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
+        SCCACHE_REDIS: redis://minmus:6379
 
 .rust_nightly: &rust_nightly
     extends: .rust_stable
@@ -98,10 +108,6 @@ before_script:
         paths:
             - .cargo-cache
             - Cargo.lock
-            - target
-    cache:
-        key: build-cache-$CI_JOB_NAME
-        paths:
             - target
     interruptible: true
 
