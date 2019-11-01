@@ -131,6 +131,14 @@ prepare:cargo-cache-newest:
         - *cargo_fetch_job
         - *rust_stable
 
+# prepare:cargo-cache-mindeps:
+#     <<:
+#         - *cargo_fetch_job
+#         - *rust_nightly
+#     variables:
+#         GENERATE_LOCKFILE_ARGS: "-Z minimal-versions"
+#         CARGO_UPDATE_POLICY: mindeps
+
 .cargo_cache_newest: &cargo_cache_newest
     dependencies:
         - prepare:cargo-cache-newest
@@ -188,6 +196,24 @@ test:cargo-nightly:
     needs:
         - build:cargo-nightly
 
+# build:cargo-mindeps:
+#     <<:
+#         - *cargo_build_job
+#         - *rust_minimum
+#     dependencies:
+#         - prepare:cargo-cache-mindeps
+#     needs:
+#         - prepare:cargo-cache-mindeps
+
+# test:cargo-mindeps:
+#     <<:
+#         - *cargo_test_job
+#         - *rust_minimum
+#     dependencies:
+#         - build:cargo-mindeps
+#     needs:
+#         - build:cargo-mindeps
+
 build:cargo-minimum-features:
     <<:
         - *cargo_build_job
@@ -232,3 +258,21 @@ test:cargo-nightly-features:
         - build:cargo-nightly-features
     needs:
         - build:cargo-nightly-features
+
+# build:cargo-mindeps-features:
+#     <<:
+#         - *cargo_build_job
+#         - *rust_minimum_features
+#     dependencies:
+#         - prepare:cargo-cache-mindeps
+#     needs:
+#         - prepare:cargo-cache-mindeps
+
+# test:cargo-mindeps-features:
+#     <<:
+#         - *cargo_test_job
+#         - *rust_minimum_features
+#     dependencies:
+#         - build:cargo-mindeps-features
+#     needs:
+#         - build:cargo-mindeps-features
