@@ -17,6 +17,8 @@ before_script:
 .cargo_update: &cargo_update
     - cargo generate-lockfile $GENERATE_LOCKFILE_ARGS
     - cargo fetch --locked
+    - mkdir .cargo
+    - cargo vendor > .cargo/config
 
 .cargo_clippy: &cargo_clippy
     # Only use it if it's available; no need to fail the build due to something
@@ -85,7 +87,8 @@ before_script:
     artifacts:
         expire_in: 60m
         paths:
-            - .cargo-cache
+            - vendor
+            - .cargo
             - Cargo.lock
     cache:
         key: cargo-cache-$CARGO_UPDATE_POLICY
@@ -106,7 +109,8 @@ before_script:
     artifacts:
         expire_in: 60m
         paths:
-            - .cargo-cache
+            - vendor
+            - .cargo
             - Cargo.lock
             - target
     interruptible: true
