@@ -17,10 +17,24 @@ before_script:
 .cargo_update: &cargo_update
     - cargo generate-lockfile $GENERATE_LOCKFILE_ARGS
     - cargo fetch --locked
+    - mkdir .cargo
+    - cargo vendor > .cargo/config
+
+.cargo_clippy: &cargo_clippy
+    # Only use it if it's available; no need to fail the build due to something
+    # gone wrong here.
+    - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
+    - rustup component add clippy
+    - cargo clippy --frozen --tests --all --verbose -- -D warnings
+    - ".gitlab/sccache --show-stats || :"
 
 .cargo_build: &cargo_build
+    # Only use it if it's available; no need to fail the build due to something
+    # gone wrong here.
+    - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
     - cargo build $CARGO_BUILD_FROZEN $CARGO_FEATURES --all --verbose
     - cargo test --frozen $CARGO_FEATURES --all --no-run --verbose
+    - ".gitlab/sccache --show-stats || :"
 
 .cargo_test: &cargo_test
     - cargo test --frozen $CARGO_FEATURES --all --verbose
@@ -33,6 +47,7 @@ before_script:
         # remove this variable.
         #CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
+        SCCACHE_REDIS: redis://minmus:6379
 
 .rust_stable: &rust_stable
     image: "rust:latest"
@@ -40,6 +55,7 @@ before_script:
     variables:
         CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
+        SCCACHE_REDIS: redis://minmus:6379
 
 .rust_nightly: &rust_nightly
     extends: .rust_stable
@@ -71,12 +87,19 @@ before_script:
     artifacts:
         expire_in: 60m
         paths:
-            - .cargo-cache
+            - vendor
+            - .cargo
             - Cargo.lock
     cache:
         key: cargo-cache-$CARGO_UPDATE_POLICY
         paths:
             - .cargo-cache
+    interruptible: true
+
+.cargo_clippy_job: &cargo_clippy_job
+    stage: build
+    tags: *rust_tags
+    script: *cargo_clippy
     interruptible: true
 
 .cargo_build_job: &cargo_build_job
@@ -86,12 +109,9 @@ before_script:
     artifacts:
         expire_in: 60m
         paths:
-            - .cargo-cache
+            - vendor
+            - .cargo
             - Cargo.lock
-            - target
-    cache:
-        key: build-cache-$CI_JOB_NAME
-        paths:
             - target
     interruptible: true
 
@@ -111,6 +131,14 @@ prepare:cargo-cache-newest:
         - *cargo_fetch_job
         - *rust_stable
 
+# prepare:cargo-cache-mindeps:
+#     <<:
+#         - *cargo_fetch_job
+#         - *rust_nightly
+#     variables:
+#         GENERATE_LOCKFILE_ARGS: "-Z minimal-versions"
+#         CARGO_UPDATE_POLICY: mindeps
+
 .cargo_cache_newest: &cargo_cache_newest
     dependencies:
         - prepare:cargo-cache-newest
@@ -119,12 +147,9 @@ prepare:cargo-cache-newest:
 
 build:cargo-clippy:
     <<:
-        - *cargo_build_job
+        - *cargo_clippy_job
         - *rust_stable
         - *cargo_cache_newest
-    script:
-        - rustup component add clippy
-        - cargo clippy --frozen --tests --all --verbose -- -D warnings
 
 build:cargo-minimum:
     <<:
@@ -171,6 +196,24 @@ test:cargo-nightly:
     needs:
         - build:cargo-nightly
 
+# build:cargo-mindeps:
+#     <<:
+#         - *cargo_build_job
+#         - *rust_minimum
+#     dependencies:
+#         - prepare:cargo-cache-mindeps
+#     needs:
+#         - prepare:cargo-cache-mindeps
+
+# test:cargo-mindeps:
+#     <<:
+#         - *cargo_test_job
+#         - *rust_minimum
+#     dependencies:
+#         - build:cargo-mindeps
+#     needs:
+#         - build:cargo-mindeps
+
 build:cargo-minimum-features:
     <<:
         - *cargo_build_job
@@ -215,3 +258,21 @@ test:cargo-nightly-features:
         - build:cargo-nightly-features
     needs:
         - build:cargo-nightly-features
+
+# build:cargo-mindeps-features:
+#     <<:
+#         - *cargo_build_job
+#         - *rust_minimum_features
+#     dependencies:
+#         - prepare:cargo-cache-mindeps
+#     needs:
+#         - prepare:cargo-cache-mindeps
+
+# test:cargo-mindeps-features:
+#     <<:
+#         - *cargo_test_job
+#         - *rust_minimum_features
+#     dependencies:
+#         - build:cargo-mindeps-features
+#     needs:
+#         - build:cargo-mindeps-features
