@@ -1,3 +1,7 @@
+# v0.4.1 (unreleased)
+
+  * Add usage documentation.
+
 # v0.4.0
 
   * Remove `error-chain`.
