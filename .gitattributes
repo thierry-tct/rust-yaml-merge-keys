@@ -1,0 +1,4 @@
+# Custom attribute to mark sources as using our Rust code style.
+[attr]our-rust-style  whitespace=tab-in-indent  format.rustfmt=nightly-2019-10-15
+
+*.rs    our-rust-style
