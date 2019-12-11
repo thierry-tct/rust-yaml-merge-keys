@@ -8,6 +8,11 @@ before_script:
     - rustc --version
     - cargo --version
 
+.only_settings: &only_settings
+    - merge_requests
+    - branches@utils/rust-git-workarea
+    - tags@utils/rust-git-workarea
+
 .cargo_update: &cargo_update
     - cargo generate-lockfile $GENERATE_LOCKFILE_ARGS
     - cargo fetch --locked
@@ -76,6 +81,7 @@ before_script:
 
 .cargo_fetch_job: &cargo_fetch_job
     stage: prepare
+    only: *only_settings
     tags:
         - build
         - docker
@@ -97,6 +103,7 @@ before_script:
 
 .cargo_clippy_job: &cargo_clippy_job
     stage: build
+    only: *only_settings
     tags:
         - build
         - docker
@@ -107,6 +114,7 @@ before_script:
 
 .cargo_build_job: &cargo_build_job
     stage: build
+    only: *only_settings
     tags:
         - build
         - docker
@@ -124,6 +132,7 @@ before_script:
 
 .cargo_test_job: &cargo_test_job
     stage: test
+    only: *only_settings
     tags:
         - build
         - docker
