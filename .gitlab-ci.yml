@@ -332,9 +332,9 @@ test:cargo-tarpaulin-features:
         - *cargo_tarpaulin_test_job
         - *rust_stable_features
     dependencies:
-        - build:cargo-tarpaulin
+        - build:cargo-tarpaulin-features
     needs:
-        - build:cargo-tarpaulin
+        - build:cargo-tarpaulin-features
 
 build:cargo-nightly-features:
     <<:
