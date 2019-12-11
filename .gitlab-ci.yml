@@ -8,12 +8,6 @@ before_script:
     - rustc --version
     - cargo --version
 
-.rust_tags: &rust_tags
-    - rust
-    - docker
-    - ghostflow
-    - linux
-
 .cargo_update: &cargo_update
     - cargo generate-lockfile $GENERATE_LOCKFILE_ARGS
     - cargo fetch --locked
@@ -82,7 +76,12 @@ before_script:
 
 .cargo_fetch_job: &cargo_fetch_job
     stage: prepare
-    tags: *rust_tags
+    tags:
+        - build
+        - docker
+        - ghostflow
+        - linux
+
     script: *cargo_update
     artifacts:
         expire_in: 60m
@@ -98,13 +97,21 @@ before_script:
 
 .cargo_clippy_job: &cargo_clippy_job
     stage: build
-    tags: *rust_tags
+    tags:
+        - build
+        - docker
+        - ghostflow
+        - linux
     script: *cargo_clippy
     interruptible: true
 
 .cargo_build_job: &cargo_build_job
     stage: build
-    tags: *rust_tags
+    tags:
+        - build
+        - docker
+        - ghostflow
+        - linux
     script: *cargo_build
     artifacts:
         expire_in: 60m
@@ -117,7 +124,11 @@ before_script:
 
 .cargo_test_job: &cargo_test_job
     stage: test
-    tags: *rust_tags
+    tags:
+        - build
+        - docker
+        - ghostflow
+        - linux
     script: *cargo_test
     interruptible: true
 
