@@ -273,7 +273,7 @@ fn test_yaml_spec_examples() {
         ),
     ];
     let merge_multiple_maps = yaml_hash![
-        (merge_key(), Yaml::Array(vec![center.clone(), big.clone()])),
+        (merge_key(), Yaml::Array(vec![center, big.clone()])),
         (Yaml::String("r".into()), Yaml::Integer(10)),
         (
             Yaml::String("label".into()),
@@ -281,10 +281,7 @@ fn test_yaml_spec_examples() {
         ),
     ];
     let overrides = yaml_hash![
-        (
-            merge_key(),
-            Yaml::Array(vec![big.clone(), left.clone(), small.clone()]),
-        ),
+        (merge_key(), Yaml::Array(vec![big, left, small]),),
         (Yaml::String("x".into()), Yaml::Integer(1)),
         (
             Yaml::String("label".into()),
