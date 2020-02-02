@@ -59,6 +59,7 @@ before_script:
         #CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
         SCCACHE_REDIS: redis://minmus:6379
+        GIT_CLONE_PATH: $CI_BUILDS_DIR/utils/rust-yaml-merge-keys
 
 .rust_stable: &rust_stable
     image: "rust:latest"
@@ -67,6 +68,7 @@ before_script:
         CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
         SCCACHE_REDIS: redis://minmus:6379
+        GIT_CLONE_PATH: $CI_BUILDS_DIR/utils/rust-yaml-merge-keys
 
 .rust_nightly: &rust_nightly
     extends: .rust_stable
