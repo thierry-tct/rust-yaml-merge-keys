@@ -14,7 +14,12 @@ before_script:
     - tags@utils/rust-yaml-merge-keys
 
 .cargo_update: &cargo_update
-    - cargo generate-lockfile $GENERATE_LOCKFILE_ARGS
+    # XXX(minver<1.41.0): No backwards compatibility is provided. Instead, it
+    # uses the format of the existing `Cargo.lock` file to determine the format
+    # of the to-be-written file. See
+    # https://github.com/rust-lang/cargo/pull/7579#pullrequestreview-323640264
+    - touch Cargo.lock
+    - cargo update $GENERATE_LOCKFILE_ARGS
     - cargo fetch --locked
     - mkdir .cargo
     - cargo vendor > .cargo/config
@@ -58,7 +63,7 @@ before_script:
         # remove this variable.
         #CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
-        SCCACHE_REDIS: redis://minmus:6379
+        GIT_CLONE_PATH: $CI_BUILDS_DIR/rust
 
 .rust_stable: &rust_stable
     image: "rust:latest"
@@ -66,7 +71,7 @@ before_script:
     variables:
         CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
-        SCCACHE_REDIS: redis://minmus:6379
+        GIT_CLONE_PATH: $CI_BUILDS_DIR/rust
 
 .rust_nightly: &rust_nightly
     extends: .rust_stable
