@@ -63,7 +63,6 @@ before_script:
         # remove this variable.
         #CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
-        SCCACHE_REDIS: redis://minmus:6379
         GIT_CLONE_PATH: $CI_BUILDS_DIR/utils/rust-yaml-merge-keys
 
 .rust_stable: &rust_stable
@@ -72,7 +71,6 @@ before_script:
     variables:
         CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
-        SCCACHE_REDIS: redis://minmus:6379
         GIT_CLONE_PATH: $CI_BUILDS_DIR/utils/rust-yaml-merge-keys
 
 .rust_nightly: &rust_nightly
