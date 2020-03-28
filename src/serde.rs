@@ -96,9 +96,9 @@ impl From<YamlWrap> for Value {
                         .collect(),
                 )
             },
-            Yaml::Alias(_) => panic!("alias unsupported"),
+            Yaml::Alias(_) => unreachable!("alias unsupported"),
             Yaml::Null => Value::Null,
-            Yaml::BadValue => panic!("bad value"),
+            Yaml::BadValue => unreachable!("bad value"),
         }
     }
 }
