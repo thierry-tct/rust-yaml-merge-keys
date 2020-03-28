@@ -112,3 +112,5 @@ pub use serde::merge_keys_serde;
 
 #[cfg(test)]
 mod test;
+#[cfg(all(test, feature = "serde_yaml"))]
+mod test_serde;
