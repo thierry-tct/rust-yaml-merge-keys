@@ -328,7 +328,7 @@ fn test_invalid_merge_key_array_values() {
     let merge_bool = yaml_hash![(merge_key(), Yaml::Array(vec![Yaml::Boolean(false)]))];
     let merge_string = yaml_hash![(merge_key(), Yaml::Array(vec![Yaml::String("".into())]))];
     let merge_integer = yaml_hash![(merge_key(), Yaml::Array(vec![Yaml::Integer(0)]))];
-    let merge_real = yaml_hash![(merge_key(), Yaml::Array(vec![Yaml::Real("0.02".into())]),)];
+    let merge_real = yaml_hash![(merge_key(), Yaml::Array(vec![Yaml::Real("0.02".into())]))];
 
     assert_is_error!(merge_null, MergeKeyError::InvalidMergeValue);
     assert_is_error!(merge_bool, MergeKeyError::InvalidMergeValue);
