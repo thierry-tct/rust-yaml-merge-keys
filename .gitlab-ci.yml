@@ -53,7 +53,7 @@ before_script:
 .cargo_tarpaulin_test: &cargo_tarpaulin_test
     - .gitlab/ci/tarpaulin.sh
     - export PATH=$PWD/.gitlab:$PATH
-    - cargo tarpaulin --frozen $CARGO_FEATURES --exclude-files vendor --ignore-panics --all --verbose
+    - cargo tarpaulin --frozen $CARGO_FEATURES --exclude-files vendor --ignore-panics --all --verbose --out Html
 
 .rust_minimum: &rust_minimum
     image: "rust:1.31.1"
@@ -184,6 +184,11 @@ before_script:
         - ghostflow
         - linux
         - privileged
+    artifacts:
+        expose_as: "Coverage report"
+        expire_in: 1 week
+        paths:
+            - tarpaulin-report.html
     script: *cargo_tarpaulin_test
     coverage: '/\d+.\d+% coverage, \d+\/\d+ lines covered/'
     interruptible: true
