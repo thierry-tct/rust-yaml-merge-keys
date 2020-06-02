@@ -1,4 +1,4 @@
-# v0.4.1 (unreleased)
+# v0.4.1
 
   * Add usage documentation.
 
