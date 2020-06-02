@@ -18,6 +18,8 @@
 //! ```rust
 //! # extern crate yaml_rust;
 //! # extern crate yaml_merge_keys;
+//! # #[cfg(feature = "serde_yaml")]
+//! # extern crate serde_yaml;
 //! use yaml_rust::YamlLoader;
 //! use yaml_merge_keys::merge_keys;
 //!
@@ -50,6 +52,19 @@
 //!
 //! // The keys have been merged.
 //! assert_eq!(merged_keys, merged_yaml);
+//!
+//! // Using `serde_yaml` is also supported with the feature.
+//! #[cfg(feature = "serde_yaml")]
+//! {
+//!     use yaml_merge_keys::merge_keys_serde;
+//!
+//!     let raw_yaml = serde_yaml::from_str(raw).unwrap();
+//!     let merged_yaml: serde_yaml::Value = serde_yaml::from_str(merged).unwrap();
+//!
+//!     let merged_keys = merge_keys_serde(raw_yaml).unwrap();
+//!
+//!     assert_eq!(merged_keys, merged_yaml);
+//! }
 //! ```
 //!
 //! [YAML Merge Key extension]: http://yaml.org/type/merge.html
