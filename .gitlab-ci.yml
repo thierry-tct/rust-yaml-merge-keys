@@ -41,7 +41,8 @@ before_script:
     - ".gitlab/sccache --show-stats || :"
 
 .cargo_test: &cargo_test
-    - cargo test --frozen $CARGO_FEATURES --all --verbose
+    - .gitlab/ci/cargo2junit.sh
+    - cargo test --frozen $CARGO_FEATURES --all --verbose -- -Z unstable-options --format json --report-time | ./.gitlab/cargo2junit | tee junit.xml
 
 .cargo_tarpaulin_build: &cargo_tarpaulin_build
     - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
@@ -153,6 +154,11 @@ before_script:
         - linux
     script: *cargo_test
     interruptible: true
+    artifacts:
+        when: always
+        reports:
+            junit:
+                - junit.xml
 
 .cargo_tarpaulin_build_job: &cargo_tarpaulin_build_job
     stage: build
