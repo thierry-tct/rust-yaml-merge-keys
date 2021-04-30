@@ -14,7 +14,7 @@ use yaml_rust::Yaml;
 /// This enum is `non_exhaustive`, but cannot be marked as such until it is stable. In the
 /// meantime, there is a hidden variant.
 #[derive(Debug, Error)]
-// TODO: #[non_exhaustive]
+#[non_exhaustive]
 pub enum MergeKeyError {
     /// A non-hash value was given as a value to merge into a hash.
     ///
@@ -27,12 +27,7 @@ pub enum MergeKeyError {
     /// ```
     #[error("only mappings and arrays of mappings may be merged")]
     InvalidMergeValue,
-    /// This is here to force `_` matching right now.
-    ///
-    /// **DO NOT USE**
-    #[doc(hidden)]
-    #[error("unreachable...")]
-    _NonExhaustive,
+    // XXX: If adding a new error case, update the test suite to expect the only error case.
 }
 
 lazy_static! {
