@@ -4,10 +4,10 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crates::serde_yaml::Value;
+use serde_yaml::Value;
 
-use merge_keys::MergeKeyError;
-use serde::merge_keys_serde;
+use crate::merge_keys::MergeKeyError;
+use crate::serde::merge_keys_serde;
 
 fn assert_yaml_idempotent(doc: Value) {
     assert_eq!(merge_keys_serde(doc.clone()).unwrap(), doc);

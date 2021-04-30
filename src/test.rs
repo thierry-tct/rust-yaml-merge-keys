@@ -4,9 +4,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crates::yaml_rust::Yaml;
+use yaml_rust::Yaml;
 
-use merge_keys::{merge_keys, MergeKeyError};
+use crate::merge_keys::{merge_keys, MergeKeyError};
 
 fn assert_yaml_idempotent(doc: Yaml) {
     assert_eq!(merge_keys(doc.clone()).unwrap(), doc);

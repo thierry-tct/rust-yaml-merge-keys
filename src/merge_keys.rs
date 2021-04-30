@@ -4,9 +4,10 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crates::thiserror::Error;
-use crates::yaml_rust::yaml::{Array, Hash};
-use crates::yaml_rust::Yaml;
+use lazy_static::lazy_static;
+use thiserror::Error;
+use yaml_rust::yaml::{Array, Hash};
+use yaml_rust::Yaml;
 
 /// Errors which may occur when performing the YAML merge key process.
 ///

@@ -4,11 +4,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crates::serde_yaml::Value;
-use crates::yaml_rust::Yaml;
+use serde_yaml::Value;
+use yaml_rust::Yaml;
 
-use merge_keys;
-use MergeKeyError;
+use crate::merge_keys;
+use crate::MergeKeyError;
 
 struct YamlWrap(Yaml);
 
