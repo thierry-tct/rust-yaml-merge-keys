@@ -4,10 +4,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crates::serde_yaml::Value;
+use serde_yaml::Value;
 
-use merge_keys::MergeKeyError;
-use serde::merge_keys_serde;
+use crate::serde::merge_keys_serde;
 
 fn assert_yaml_idempotent(doc: Value) {
     assert_eq!(merge_keys_serde(doc.clone()).unwrap(), doc);
@@ -307,13 +306,15 @@ fn test_yaml_spec_examples() {
 
 macro_rules! assert_is_error {
     ( $doc:expr, $kind:path ) => {
-        let err = merge_keys_serde($doc).unwrap_err();
+        let _ = merge_keys_serde($doc).unwrap_err();
 
+        /* XXX: irrefutable
         if let $kind = err {
             // Expected error.
         } else {
             panic!("unexpected error: {:?}", err);
         }
+        */
     };
 }
 

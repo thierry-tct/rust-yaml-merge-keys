@@ -14,11 +14,6 @@ before_script:
     - tags@utils/rust-yaml-merge-keys
 
 .cargo_update: &cargo_update
-    # XXX(minver<1.41.0): No backwards compatibility is provided. Instead, it
-    # uses the format of the existing `Cargo.lock` file to determine the format
-    # of the to-be-written file. See
-    # https://github.com/rust-lang/cargo/pull/7579#pullrequestreview-323640264
-    - touch Cargo.lock
     - cargo update $GENERATE_LOCKFILE_ARGS
     - cargo fetch --locked
     - mkdir .cargo
@@ -29,19 +24,20 @@ before_script:
     # gone wrong here.
     - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
     - rustup component add clippy
-    - cargo clippy --frozen --tests --all --verbose -- -D warnings
+    - cargo clippy --frozen $CARGO_FEATURES --tests --all --verbose -- -D warnings
     - ".gitlab/sccache --show-stats || :"
 
 .cargo_build: &cargo_build
     # Only use it if it's available; no need to fail the build due to something
     # gone wrong here.
     - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
-    - cargo build $CARGO_BUILD_FROZEN $CARGO_FEATURES --all --verbose
+    - cargo build --frozen $CARGO_FEATURES --all --verbose
     - cargo test --frozen $CARGO_FEATURES --all --no-run --verbose
     - ".gitlab/sccache --show-stats || :"
 
 .cargo_test: &cargo_test
-    - cargo test --frozen $CARGO_FEATURES --all --verbose
+    - .gitlab/ci/cargo2junit.sh
+    - cargo test --frozen $CARGO_FEATURES --all --verbose -- -Z unstable-options --format json --report-time | ./.gitlab/cargo2junit | tee junit.xml
 
 .cargo_tarpaulin_build: &cargo_tarpaulin_build
     - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
@@ -56,12 +52,9 @@ before_script:
     - cargo tarpaulin --frozen $CARGO_FEATURES --exclude-files vendor --ignore-panics --all --verbose --out Html
 
 .rust_minimum: &rust_minimum
-    image: "rust:1.31.1"
+    image: "rust:1.41.0"
 
     variables:
-        # Not supported yet here? If updating to a version where this works,
-        # remove this variable.
-        #CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
         GIT_CLONE_PATH: $CI_BUILDS_DIR/rust
 
@@ -69,7 +62,6 @@ before_script:
     image: "rust:latest"
 
     variables:
-        CARGO_BUILD_FROZEN: --frozen
         CARGO_UPDATE_POLICY: newest
         GIT_CLONE_PATH: $CI_BUILDS_DIR/rust
 
@@ -153,6 +145,11 @@ before_script:
         - linux
     script: *cargo_test
     interruptible: true
+    artifacts:
+        when: always
+        reports:
+            junit:
+                - junit.xml
 
 .cargo_tarpaulin_build_job: &cargo_tarpaulin_build_job
     stage: build
@@ -215,6 +212,12 @@ build:cargo-clippy:
     <<:
         - *cargo_clippy_job
         - *rust_stable
+        - *cargo_cache_newest
+
+build:cargo-clippy-features:
+    <<:
+        - *cargo_clippy_job
+        - *rust_stable_features
         - *cargo_cache_newest
 
 build:cargo-minimum:

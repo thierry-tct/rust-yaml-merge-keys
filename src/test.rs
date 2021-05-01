@@ -4,9 +4,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crates::yaml_rust::Yaml;
+use yaml_rust::Yaml;
 
-use merge_keys::{merge_keys, MergeKeyError};
+use crate::merge_keys::merge_keys;
 
 fn assert_yaml_idempotent(doc: Yaml) {
     assert_eq!(merge_keys(doc.clone()).unwrap(), doc);
@@ -297,13 +297,15 @@ fn test_yaml_spec_examples() {
 
 macro_rules! assert_is_error {
     ( $doc:expr, $kind:path ) => {
-        let err = merge_keys($doc).unwrap_err();
+        let _ = merge_keys($doc).unwrap_err();
 
+        /* XXX: irrerfutable
         if let $kind = err {
             // Expected error.
         } else {
             panic!("unexpected error: {:?}", err);
         }
+        */
     };
 }
 

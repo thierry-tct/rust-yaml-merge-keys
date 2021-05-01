@@ -103,19 +103,6 @@
 
 #![deny(missing_docs)]
 
-#[macro_use]
-extern crate lazy_static;
-
-mod crates {
-    // public
-    #[cfg(feature = "serde_yaml")]
-    pub extern crate serde_yaml;
-    pub extern crate yaml_rust;
-
-    // private
-    pub extern crate thiserror;
-}
-
 mod merge_keys;
 #[cfg(feature = "serde_yaml")]
 mod serde;

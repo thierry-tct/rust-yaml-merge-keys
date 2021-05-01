@@ -1,3 +1,8 @@
+# v0.5.0 (unreleased)
+
+  * MSRV bumped to 1.41. While the code update is just for a small code
+    simplification, in order to simplify CI, updating makes sense.
+
 # v0.4.1
 
   * Add usage documentation.
