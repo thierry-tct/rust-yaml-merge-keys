@@ -20,12 +20,8 @@ before_script:
     - cargo vendor > .cargo/config
 
 .cargo_clippy: &cargo_clippy
-    # Only use it if it's available; no need to fail the build due to something
-    # gone wrong here.
-    - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
     - rustup component add clippy
     - cargo clippy --frozen $CARGO_FEATURES --tests --all --verbose -- -D warnings
-    - ".gitlab/sccache --show-stats || :"
 
 .cargo_build: &cargo_build
     # Only use it if it's available; no need to fail the build due to something
