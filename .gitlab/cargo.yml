@@ -89,3 +89,16 @@
         - cargo tarpaulin --frozen $CARGO_FEATURES --exclude-files vendor --ignore-panics --all --verbose --out Html
     coverage: '/\d+.\d+% coverage, \d+\/\d+ lines covered/'
     interruptible: true
+
+.cargo_audit_job:
+    stage: build
+    script:
+        - *cargo_before_script
+        - .gitlab/ci/cargo-audit.sh
+        - export PATH=$PWD/.gitlab:$PATH
+        - cargo audit -D warnings -d .cargo-audit-db $CARGO_AUDIT_ARGS
+    cache:
+        key: cargo-cache-$CARGO_UPDATE_POLICY
+        paths:
+            - .cargo-audit-db
+    interruptible: true

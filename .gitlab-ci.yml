@@ -76,6 +76,37 @@ clippy-features:build:
     needs:
         - cache-newest:prep
 
+.cargo_audit_ignore:
+    variables:
+        # Ignored advisories
+        CARGO_AUDIT_ARGS: ""
+
+audit-mindeps:build:
+    extends:
+        - .rust_minimum
+        - .cargo_audit_job
+        - .cargo_build_tags
+        - .run_automatically
+        - .cargo_audit_ignore
+    dependencies:
+        - cache-mindeps:prep
+    needs:
+        - cache-mindeps:prep
+    variables:
+        CARGO_UPDATE_POLICY: mindeps
+
+audit-newest:build:
+    extends:
+        - .rust_stable
+        - .cargo_audit_job
+        - .cargo_build_tags
+        - .run_automatically
+        - .cargo_audit_ignore
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
+
 minimum:build:
     extends:
         - .rust_minimum
