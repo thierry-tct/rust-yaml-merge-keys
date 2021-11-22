@@ -1,358 +1,356 @@
-# The `mindeps` is not supported right now. `yaml-rust` is too loose in its
-# requirement on `linked-hash-map`. `serde_yaml` then fails on some APIs that
-# *it* needs from the exposure of that crate from `yaml-rust`'s API.
+include:
+    # Metadata shared by many jobs
+    - local: .gitlab/rules.yml
+    - local: .gitlab/artifacts.yml
 
-before_script:
-    - apt-get update -yqq
-    - export CARGO_HOME=.cargo-cache
-    - rustc --version
-    - cargo --version
+    # Builds.
+    - local: .gitlab/cargo.yml
 
-.only_settings: &only_settings
-    - merge_requests
-    - branches@utils/rust-yaml-merge-keys
-    - tags@utils/rust-yaml-merge-keys
+stages:
+    - prep
+    - build
+    - test
 
-.cargo_update: &cargo_update
-    - cargo update $GENERATE_LOCKFILE_ARGS
-    - cargo fetch --locked
-    - mkdir .cargo
-    - cargo vendor > .cargo/config
-
-.cargo_clippy: &cargo_clippy
-    - rustup component add clippy
-    - cargo clippy --frozen $CARGO_FEATURES --tests --all --verbose -- -D warnings
-
-.cargo_build: &cargo_build
-    # Only use it if it's available; no need to fail the build due to something
-    # gone wrong here.
-    - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
-    - cargo build --frozen $CARGO_FEATURES --all --verbose
-    - cargo test --frozen $CARGO_FEATURES --all --no-run --verbose
-    - ".gitlab/sccache --show-stats || :"
-
-.cargo_test: &cargo_test
-    - .gitlab/ci/cargo2junit.sh
-    - cargo test --frozen $CARGO_FEATURES --all --verbose -- -Z unstable-options --format json --report-time | ./.gitlab/cargo2junit | tee junit.xml
-
-.cargo_tarpaulin_build: &cargo_tarpaulin_build
-    - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
-    - .gitlab/ci/tarpaulin.sh
-    - export PATH=$PWD/.gitlab:$PATH
-    - cargo tarpaulin --no-run --frozen $CARGO_FEATURES --exclude-files vendor --ignore-panics --all --verbose
-    - ".gitlab/sccache --show-stats || :"
-
-.cargo_tarpaulin_test: &cargo_tarpaulin_test
-    - .gitlab/ci/tarpaulin.sh
-    - export PATH=$PWD/.gitlab:$PATH
-    - cargo tarpaulin --frozen $CARGO_FEATURES --exclude-files vendor --ignore-panics --all --verbose --out Html
-
-.rust_minimum: &rust_minimum
+.rust_minimum:
     image: "rust:1.41.0"
 
     variables:
         CARGO_UPDATE_POLICY: newest
         GIT_CLONE_PATH: $CI_BUILDS_DIR/rust
 
-.rust_stable: &rust_stable
+.rust_stable:
     image: "rust:latest"
 
     variables:
         CARGO_UPDATE_POLICY: newest
         GIT_CLONE_PATH: $CI_BUILDS_DIR/rust
 
-.rust_nightly: &rust_nightly
+.rust_nightly:
     extends: .rust_stable
 
     image: "rustlang/rust:nightly"
 
-.rust_minimum_features: &rust_minimum_features
-    extends: .rust_minimum
-
+.cargo_all_features:
     variables:
         CARGO_FEATURES: --all-features
 
-.rust_stable_features: &rust_stable_features
-    extends: .rust_stable
+cache-newest:prep:
+    extends:
+        - .rust_stable
+        - .cargo_fetch_job
+        - .cargo_build_tags
+        - .cargo_fetch_artifacts
+        - .run_automatically
 
+cache-mindeps:prep:
+    extends:
+        - .rust_nightly
+        - .cargo_fetch_job
+        - .cargo_build_tags
+        - .cargo_fetch_artifacts
+        - .run_automatically
     variables:
-        CARGO_FEATURES: --all-features
+        GENERATE_LOCKFILE_ARGS: "-Z minimal-versions"
+        CARGO_UPDATE_POLICY: mindeps
 
-.rust_nightly_features: &rust_nightly_features
-    extends: .rust_nightly
+clippy:build:
+    extends:
+        - .rust_stable
+        - .cargo_clippy_job
+        - .cargo_build_tags
+        - .run_automatically
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
 
+clippy-features:build:
+    extends:
+        - .rust_stable
+        - .cargo_all_features
+        - .cargo_clippy_job
+        - .cargo_build_tags
+        - .run_automatically
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
+
+.cargo_audit_ignore:
     variables:
-        CARGO_FEATURES: --all-features
+        # Ignored advisories
+        CARGO_AUDIT_ARGS: ""
 
-.cargo_fetch_job: &cargo_fetch_job
-    stage: prepare
-    only: *only_settings
-    tags:
-        - build
-        - docker
-        - linux
-
-    script: *cargo_update
-    artifacts:
-        expire_in: 60m
-        paths:
-            - vendor
-            - .cargo
-            - Cargo.lock
-    cache:
-        key: cargo-cache-$CARGO_UPDATE_POLICY
-        paths:
-            - .cargo-cache
-    interruptible: true
-
-.cargo_clippy_job: &cargo_clippy_job
-    stage: build
-    only: *only_settings
-    tags:
-        - build
-        - docker
-        - linux
-    script: *cargo_clippy
-    interruptible: true
-
-.cargo_build_job: &cargo_build_job
-    stage: build
-    only: *only_settings
-    tags:
-        - build
-        - docker
-        - linux
-    script: *cargo_build
-    artifacts:
-        expire_in: 60m
-        paths:
-            - vendor
-            - .cargo
-            - Cargo.lock
-            - target
-    interruptible: true
-
-.cargo_test_job: &cargo_test_job
-    stage: test
-    only: *only_settings
-    tags:
-        - build
-        - docker
-        - linux
-    script: *cargo_test
-    interruptible: true
-    artifacts:
-        when: always
-        reports:
-            junit:
-                - junit.xml
-
-.cargo_tarpaulin_build_job: &cargo_tarpaulin_build_job
-    stage: build
-    only: *only_settings
-    tags:
-        - build
-        - docker
-        - linux
-    script: *cargo_tarpaulin_build
-    artifacts:
-        expire_in: 60m
-        paths:
-            - vendor
-            - .cargo
-            - Cargo.lock
-            - target
-    interruptible: true
-
-.cargo_tarpaulin_test_job: &cargo_tarpaulin_test_job
-    stage: test
-    only: *only_settings
-    tags:
-        - docker
-        - linux
-        - privileged
-    artifacts:
-        expose_as: "Coverage report"
-        expire_in: 1 week
-        paths:
-            - tarpaulin-report.html
-    script: *cargo_tarpaulin_test
-    coverage: '/\d+.\d+% coverage, \d+\/\d+ lines covered/'
-    interruptible: true
-
-stages:
-    - prepare
-    - build
-    - test
-
-prepare:cargo-cache-newest:
-    <<:
-        - *cargo_fetch_job
-        - *rust_stable
-
-# prepare:cargo-cache-mindeps:
-#     <<:
-#         - *cargo_fetch_job
-#         - *rust_nightly
-#     variables:
-#         GENERATE_LOCKFILE_ARGS: "-Z minimal-versions"
-#         CARGO_UPDATE_POLICY: mindeps
-
-.cargo_cache_newest: &cargo_cache_newest
+audit-mindeps:build:
+    extends:
+        - .rust_minimum
+        - .cargo_audit_job
+        - .cargo_build_tags
+        - .run_automatically
+        - .cargo_audit_ignore
     dependencies:
-        - prepare:cargo-cache-newest
+        - cache-mindeps:prep
     needs:
-        - prepare:cargo-cache-newest
+        - cache-mindeps:prep
+    variables:
+        CARGO_UPDATE_POLICY: mindeps
 
-build:cargo-clippy:
-    <<:
-        - *cargo_clippy_job
-        - *rust_stable
-        - *cargo_cache_newest
-
-build:cargo-clippy-features:
-    <<:
-        - *cargo_clippy_job
-        - *rust_stable_features
-        - *cargo_cache_newest
-
-build:cargo-minimum:
-    <<:
-        - *cargo_build_job
-        - *rust_minimum
-        - *cargo_cache_newest
-
-test:cargo-minimum:
-    <<:
-        - *cargo_test_job
-        - *rust_minimum
+audit-newest:build:
+    extends:
+        - .rust_stable
+        - .cargo_audit_job
+        - .cargo_build_tags
+        - .run_automatically
+        - .cargo_audit_ignore
     dependencies:
-        - build:cargo-minimum
+        - cache-newest:prep
     needs:
-        - build:cargo-minimum
+        - cache-newest:prep
 
-build:cargo-stable:
-    <<:
-        - *cargo_build_job
-        - *rust_stable
-        - *cargo_cache_newest
-
-test:cargo-stable:
-    <<:
-        - *cargo_test_job
-        - *rust_stable
+minimum:build:
+    extends:
+        - .rust_minimum
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
     dependencies:
-        - build:cargo-stable
+        - cache-newest:prep
     needs:
-        - build:cargo-stable
+        - cache-newest:prep
 
-build:cargo-nightly:
-    <<:
-        - *cargo_build_job
-        - *rust_nightly
-        - *cargo_cache_newest
-
-test:cargo-nightly:
-    <<:
-        - *cargo_test_job
-        - *rust_nightly
+minimum:test:
+    extends:
+        - .rust_minimum
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
     dependencies:
-        - build:cargo-nightly
+        - minimum:build
     needs:
-        - build:cargo-nightly
+        - minimum:build
 
-# build:cargo-mindeps:
-#     <<:
-#         - *cargo_build_job
-#         - *rust_minimum
-#     dependencies:
-#         - prepare:cargo-cache-mindeps
-#     needs:
-#         - prepare:cargo-cache-mindeps
-
-# test:cargo-mindeps:
-#     <<:
-#         - *cargo_test_job
-#         - *rust_minimum
-#     dependencies:
-#         - build:cargo-mindeps
-#     needs:
-#         - build:cargo-mindeps
-
-build:cargo-minimum-features:
-    <<:
-        - *cargo_build_job
-        - *rust_minimum_features
-        - *cargo_cache_newest
-
-test:cargo-minimum-features:
-    <<:
-        - *cargo_test_job
-        - *rust_minimum_features
+stable:build:
+    extends:
+        - .rust_stable
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
     dependencies:
-        - build:cargo-minimum-features
+        - cache-newest:prep
     needs:
-        - build:cargo-minimum-features
+        - cache-newest:prep
 
-build:cargo-stable-features:
-    <<:
-        - *cargo_build_job
-        - *rust_stable_features
-        - *cargo_cache_newest
-
-test:cargo-stable-features:
-    <<:
-        - *cargo_test_job
-        - *rust_stable_features
+stable:test:
+    extends:
+        - .rust_stable
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
     dependencies:
-        - build:cargo-stable-features
+        - stable:build
     needs:
-        - build:cargo-stable-features
+        - stable:build
 
-build:cargo-tarpaulin-features:
-    <<:
-        - *cargo_tarpaulin_build_job
-        - *rust_stable_features
-        - *cargo_cache_newest
-
-test:cargo-tarpaulin-features:
-    <<:
-        - *cargo_tarpaulin_test_job
-        - *rust_stable_features
+tarpaulin:build:
+    extends:
+        - .rust_stable
+        - .cargo_tarpaulin_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
     dependencies:
-        - build:cargo-tarpaulin-features
+        - cache-newest:prep
     needs:
-        - build:cargo-tarpaulin-features
+        - cache-newest:prep
 
-build:cargo-nightly-features:
-    <<:
-        - *cargo_build_job
-        - *rust_nightly_features
-        - *cargo_cache_newest
-
-test:cargo-nightly-features:
-    <<:
-        - *cargo_test_job
-        - *rust_nightly_features
+tarpaulin:test:
+    extends:
+        - .rust_stable
+        - .cargo_tarpaulin_test_job
+        - .cargo_privileged_tags
+        - .run_automatically
     dependencies:
-        - build:cargo-nightly-features
+        - tarpaulin:build
     needs:
-        - build:cargo-nightly-features
+        - tarpaulin:build
 
-# build:cargo-mindeps-features:
-#     <<:
-#         - *cargo_build_job
-#         - *rust_minimum_features
-#     dependencies:
-#         - prepare:cargo-cache-mindeps
-#     needs:
-#         - prepare:cargo-cache-mindeps
+nightly:build:
+    extends:
+        - .rust_nightly
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
 
-# test:cargo-mindeps-features:
-#     <<:
-#         - *cargo_test_job
-#         - *rust_minimum_features
-#     dependencies:
-#         - build:cargo-mindeps-features
-#     needs:
-#         - build:cargo-mindeps-features
+nightly:test:
+    extends:
+        - .rust_nightly
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
+    dependencies:
+        - nightly:build
+    needs:
+        - nightly:build
+
+mindeps:build:
+    extends:
+        - .rust_minimum
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
+    dependencies:
+        - cache-mindeps:prep
+    needs:
+        - cache-mindeps:prep
+
+mindeps:test:
+    extends:
+        - .rust_minimum
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
+    dependencies:
+        - mindeps:build
+    needs:
+        - mindeps:build
+
+minimum-features:build:
+    extends:
+        - .rust_minimum
+        - .cargo_all_features
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
+
+minimum-features:test:
+    extends:
+        - .rust_minimum
+        - .cargo_all_features
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
+    dependencies:
+        - minimum-features:build
+    needs:
+        - minimum-features:build
+
+stable-features:build:
+    extends:
+        - .rust_stable
+        - .cargo_all_features
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
+
+stable-features:test:
+    extends:
+        - .rust_stable
+        - .cargo_all_features
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
+    dependencies:
+        - stable-features:build
+    needs:
+        - stable-features:build
+
+tarpaulin-features:build:
+    extends:
+        - .rust_stable
+        - .cargo_all_features
+        - .cargo_tarpaulin_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
+
+tarpaulin-features:test:
+    extends:
+        - .rust_stable
+        - .cargo_all_features
+        - .cargo_tarpaulin_test_job
+        - .cargo_privileged_tags
+        - .run_automatically
+    dependencies:
+        - tarpaulin-features:build
+    needs:
+        - tarpaulin-features:build
+
+nightly-features:build:
+    extends:
+        - .rust_nightly
+        - .cargo_all_features
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
+    dependencies:
+        - cache-newest:prep
+    needs:
+        - cache-newest:prep
+
+nightly-features:test:
+    extends:
+        - .rust_nightly
+        - .cargo_all_features
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
+    dependencies:
+        - nightly-features:build
+    needs:
+        - nightly-features:build
+
+mindeps-features:build:
+    extends:
+        - .rust_minimum
+        - .cargo_all_features
+        - .cargo_build_job
+        - .cargo_build_tags
+        - .cargo_build_artifacts
+        - .run_automatically
+    dependencies:
+        - cache-mindeps:prep
+    needs:
+        - cache-mindeps:prep
+
+mindeps-features:test:
+    extends:
+        - .rust_minimum
+        - .cargo_all_features
+        - .cargo_test_job
+        - .cargo_build_tags
+        - .cargo_test_artifacts
+        - .run_automatically
+    dependencies:
+        - mindeps-features:build
+    needs:
+        - mindeps-features:build

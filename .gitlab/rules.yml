@@ -1,0 +1,9 @@
+# Rules for where jobs can run
+
+.run_automatically:
+    rules:
+        - if: '$CI_MERGE_REQUEST_ID'
+          when: on_success
+        - if: '$CI_PROJECT_PATH == "utils/rust-yaml-merge-keys"'
+          when: on_success
+        - when: never
