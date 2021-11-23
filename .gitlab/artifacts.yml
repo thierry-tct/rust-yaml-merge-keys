@@ -1,6 +1,6 @@
 .cargo_fetch_artifacts:
     artifacts:
-        expire_in: 60m
+        expire_in: 24h
         paths:
             - vendor
             - .cargo
@@ -8,7 +8,7 @@
 
 .cargo_build_artifacts:
     artifacts:
-        expire_in: 60m
+        expire_in: 24h
         paths:
             - vendor
             - .cargo
