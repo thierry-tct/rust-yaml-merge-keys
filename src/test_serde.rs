@@ -40,6 +40,17 @@ fn test_ignore_non_containers() {
 }
 
 #[test]
+fn test_float_constants() {
+    let nan = serde_yaml::from_str(".nan").unwrap();
+    let inf = serde_yaml::from_str(".inf").unwrap();
+    let neg_inf = serde_yaml::from_str("-.inf").unwrap();
+
+    assert_yaml_idempotent(nan);
+    assert_yaml_idempotent(inf);
+    assert_yaml_idempotent(neg_inf);
+}
+
+#[test]
 fn test_ignore_container_no_merge_keys() {
     let arr = Value::Sequence(vec![Value::Number(10.into()), Value::Number(100.into())]);
     let hash = yaml_hash![
