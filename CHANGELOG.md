@@ -1,3 +1,7 @@
+# v0.5.1 (unreleased)
+
+  * Properly transform `.inf` and `.nan` when using the `serde_yaml` feature.
+
 # v0.5.0
 
   * MSRV bumped to 1.41. While the code update is just for a small code

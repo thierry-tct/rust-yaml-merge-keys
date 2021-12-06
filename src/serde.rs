@@ -66,8 +66,8 @@ impl From<YamlWrap> for Value {
     fn from(yaml: YamlWrap) -> Self {
         match yaml.0 {
             Yaml::Real(f) => {
-                match f.parse::<f64>() {
-                    Ok(f) => Value::Number(f.into()),
+                match serde_yaml::from_str(&f) {
+                    Ok(f) => Value::Number(f),
                     Err(_) => Value::String(f),
                 }
             },

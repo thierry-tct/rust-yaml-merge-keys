@@ -17,8 +17,7 @@ fn merge_key() -> Value {
 }
 
 macro_rules! yaml_hash {
-    // XXX(rust-1.37.0): Use `$(,)?` when available.
-    [ $( $pair:expr ),* $(,)* ] => {
+    [ $( $pair:expr ),* $(,)? ] => {
         Value::Mapping([$( $pair, )*].iter().cloned().collect())
     };
 }
@@ -38,6 +37,17 @@ fn test_ignore_non_containers() {
     assert_yaml_idempotent(string);
     assert_yaml_idempotent(integer);
     assert_yaml_idempotent(real);
+}
+
+#[test]
+fn test_float_constants() {
+    let nan = serde_yaml::from_str(".nan").unwrap();
+    let inf = serde_yaml::from_str(".inf").unwrap();
+    let neg_inf = serde_yaml::from_str("-.inf").unwrap();
+
+    assert_yaml_idempotent(nan);
+    assert_yaml_idempotent(inf);
+    assert_yaml_idempotent(neg_inf);
 }
 
 #[test]
