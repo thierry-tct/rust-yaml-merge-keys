@@ -1,4 +1,4 @@
-# v0.5.1 (unreleased)
+# v0.5.1
 
   * Properly transform `.inf` and `.nan` when using the `serde_yaml` feature.
 
