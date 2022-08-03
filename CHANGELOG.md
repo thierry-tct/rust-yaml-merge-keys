@@ -1,3 +1,7 @@
+# v0.6.0 (unreleased)
+
+  * `serde_yaml` 0.9 is now supported. 0.8 is no longer supported.
+
 # v0.5.1
 
   * Properly transform `.inf` and `.nan` when using the `serde_yaml` feature.

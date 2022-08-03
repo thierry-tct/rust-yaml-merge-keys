@@ -6,7 +6,7 @@
 
 use serde_yaml::Value;
 
-use crate::serde::merge_keys_serde;
+use crate::serde::{merge_keys_serde, TAGGED_YAML_SMUGGLE_TAG_KEY, TAGGED_YAML_SMUGGLE_VALUE_KEY};
 
 fn assert_yaml_idempotent(doc: Value) {
     assert_eq!(merge_keys_serde(doc.clone()).unwrap(), doc);
@@ -359,4 +359,95 @@ fn test_invalid_merge_key_array_values() {
     assert_is_error!(merge_string, MergeKeyError::InvalidMergeValue);
     assert_is_error!(merge_integer, MergeKeyError::InvalidMergeValue);
     assert_is_error!(merge_real, MergeKeyError::InvalidMergeValue);
+}
+
+macro_rules! yaml_tagged {
+    [ $tag:expr => $value:expr $(,)? ] => {
+        Value::Tagged(Box::new(serde_yaml::value::TaggedValue {
+            tag: serde_yaml::value::Tag::new($tag),
+            value: $value,
+        }))
+    };
+}
+
+#[test]
+fn test_tagged_value() {
+    let tagged = yaml_tagged!("Date" => Value::String("2022-01-01".into()));
+
+    assert_yaml_idempotent(tagged);
+}
+
+#[test]
+fn test_tagged_value_imposter() {
+    let fake = yaml_hash![
+        (
+            Value::String(TAGGED_YAML_SMUGGLE_TAG_KEY.into()),
+            Value::String("tag".into()),
+        ),
+        (
+            Value::String(TAGGED_YAML_SMUGGLE_VALUE_KEY.into()),
+            Value::Null,
+        ),
+    ];
+    let fake_false_positive = yaml_tagged!("tag" => Value::Null);
+    let wrong_count_just_tag = yaml_hash![(
+        Value::String(TAGGED_YAML_SMUGGLE_TAG_KEY.into()),
+        Value::String("tag".into()),
+    ),];
+    let wrong_count_just_value = yaml_hash![(
+        Value::String(TAGGED_YAML_SMUGGLE_VALUE_KEY.into()),
+        Value::Null,
+    ),];
+    let wrong_count_more = yaml_hash![
+        (
+            Value::String(TAGGED_YAML_SMUGGLE_TAG_KEY.into()),
+            Value::String("tag".into()),
+        ),
+        (
+            Value::String(TAGGED_YAML_SMUGGLE_VALUE_KEY.into()),
+            Value::Null,
+        ),
+        (Value::String("other".into()), Value::Null),
+    ];
+    let wrong_tag_type = yaml_hash![
+        (
+            Value::String(TAGGED_YAML_SMUGGLE_TAG_KEY.into()),
+            Value::Null,
+        ),
+        (
+            Value::String(TAGGED_YAML_SMUGGLE_VALUE_KEY.into()),
+            Value::Null,
+        ),
+    ];
+
+    assert_eq!(merge_keys_serde(fake).unwrap(), fake_false_positive);
+    assert_yaml_idempotent(wrong_count_just_tag);
+    assert_yaml_idempotent(wrong_count_just_value);
+    assert_yaml_idempotent(wrong_count_more);
+    assert_yaml_idempotent(wrong_tag_type);
+}
+
+#[test]
+fn test_merge_tagged_value() {
+    let hash = Value::Sequence(vec![yaml_hash![
+        (
+            merge_key(),
+            yaml_hash![(
+                Value::Number(15.into()),
+                yaml_tagged!("Tag" => Value::String("s".into())),
+            )],
+        ),
+        (Value::Number(10.into()), Value::Null),
+        (Value::Number(100.into()), Value::String("string".into())),
+    ]]);
+    let expected = Value::Sequence(vec![yaml_hash![
+        (Value::Number(10.into()), Value::Null),
+        (Value::Number(100.into()), Value::String("string".into())),
+        (
+            Value::Number(15.into()),
+            yaml_tagged!("Tag" => Value::String("s".into())),
+        ),
+    ]]);
+
+    assert_eq!(merge_keys_serde(hash).unwrap(), expected);
 }
