@@ -12,7 +12,7 @@ stages:
     - test
 
 .rust_minimum:
-    image: "rust:1.41.0"
+    image: "rust:1.58"
 
     variables:
         CARGO_UPDATE_POLICY: newest
