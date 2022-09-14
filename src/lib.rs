@@ -109,8 +109,11 @@ mod serde;
 
 pub use merge_keys::merge_keys;
 pub use merge_keys::MergeKeyError;
+
 #[cfg(feature = "serde_yaml")]
 pub use serde::merge_keys_serde;
+#[cfg(feature = "serde_yaml")]
+pub use serde_yaml;
 
 #[cfg(test)]
 mod test;
