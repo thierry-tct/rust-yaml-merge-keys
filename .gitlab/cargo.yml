@@ -53,7 +53,7 @@
         - cargo test --frozen $CARGO_FEATURES --all --no-run --verbose
         - ".gitlab/sccache --show-stats || :"
     artifacts:
-        expire_in: 60m
+        expire_in: 24h
         paths:
             - vendor
             - .cargo
