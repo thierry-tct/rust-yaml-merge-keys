@@ -9,13 +9,13 @@
         - build
         - docker
         - ghostflow
-        - linux
+        - linux-x86_64
 
 .cargo_privileged_tags:
     tags:
         - docker
         - ghostflow
-        - linux
+        - linux-x86_64
         - privileged
 
 .cargo_fetch_job:
