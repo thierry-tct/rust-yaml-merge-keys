@@ -42,7 +42,7 @@ impl From<Value> for YamlWrap {
                 if let Some(i) = n.as_i64() {
                     Yaml::Integer(i)
                 } else {
-                    Yaml::Real(format!("{}", n))
+                    Yaml::Real(n.to_string())
                 }
             },
             Value::String(s) => Yaml::String(s),
