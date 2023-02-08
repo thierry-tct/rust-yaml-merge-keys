@@ -2,9 +2,9 @@
 
 set -e
 
-readonly version="0.20.1"
-readonly sha256sum="ec7c17e6a1406cc9dfb6ccd1a2319a7414bff84266372997be8d760524416eb0"
-readonly filename="cargo-tarpaulin-$version-travis"
+readonly version="0.25.0"
+readonly sha256sum="e6ae2d11e684ee20f3860b1833de6fcb6ac44db5fc49a82a179bb969924870f3"
+readonly filename="cargo-tarpaulin-x86_64-unknown-linux-musl"
 readonly tarball="$filename.tar.gz"
 
 cd .gitlab
