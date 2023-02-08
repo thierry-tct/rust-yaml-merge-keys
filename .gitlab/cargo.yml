@@ -76,7 +76,7 @@
         - .gitlab/ci/sccache.sh && export RUSTC_WRAPPER=$PWD/.gitlab/sccache
         - .gitlab/ci/tarpaulin.sh
         - export PATH=$PWD/.gitlab:$PATH
-        - cargo tarpaulin --no-run --frozen $CARGO_FEATURES --exclude-files 'vendor/*' --ignore-panics --all --verbose
+        - cargo tarpaulin --no-run --frozen $CARGO_FEATURES --exclude-files 'vendor/*' --ignore-panics --all --verbose --engine llvm
         - ".gitlab/sccache --show-stats || :"
     interruptible: true
 
@@ -86,7 +86,7 @@
         - *cargo_before_script
         - .gitlab/ci/tarpaulin.sh
         - export PATH=$PWD/.gitlab:$PATH
-        - cargo tarpaulin --frozen $CARGO_FEATURES --exclude-files 'vendor/*' --ignore-panics --all --verbose --out Html
+        - cargo tarpaulin --frozen $CARGO_FEATURES --exclude-files 'vendor/*' --ignore-panics --all --verbose --out Html --engine llvm
     coverage: '/\d+.\d+% coverage, \d+\/\d+ lines covered/'
     interruptible: true
 
